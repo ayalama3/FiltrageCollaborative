@@ -1,0 +1,44 @@
+import matplotlib.pyplot as plt
+
+# Données
+n_components = [8, 16, 32, 64]
+
+hr10 = [0.0106, 0.0032, 0.0011, 0.0053]
+ndcg10 = [0.0059, 0.0017, 0.0004, 0.0017]
+rmse = [0.9365, 1.6125, 1.2684, 1.6776]
+
+# ------------------------
+# Courbe RMSE
+# ------------------------
+plt.figure(figsize=(8, 5))
+plt.plot(n_components, rmse, marker='o', color='blue', label='RMSE')
+plt.xlabel('Nombre de composantes (NMF)')
+plt.ylabel('RMSE')
+plt.title('NMF - Évolution de RMSE en fonction du nombre de composantes')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# ------------------------
+# Courbe HR@10
+# ------------------------
+plt.figure(figsize=(8, 5))
+plt.plot(n_components, hr10, marker='s', linestyle='--', color='orange', label='HR@10')
+plt.xlabel('Nombre de composantes (NMF)')
+plt.ylabel('HR@10')
+plt.title('NMF - Évolution de HR@10 en fonction du nombre de composantes')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# ------------------------
+# BONUS : courbe NDCG@10 si tu veux aussi
+# ------------------------
+plt.figure(figsize=(8, 5))
+plt.plot(n_components, ndcg10, marker='^', linestyle='-.', color='green', label='NDCG@10')
+plt.xlabel('Nombre de composantes (NMF)')
+plt.ylabel('NDCG@10')
+plt.title('NMF - Évolution de NDCG@10 en fonction du nombre de composantes')
+plt.grid(True)
+plt.legend()
+plt.show()
