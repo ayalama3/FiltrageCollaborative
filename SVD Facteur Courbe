@@ -1,0 +1,26 @@
+import matplotlib.pyplot as plt
+
+# Données (extrait de ton tableau)
+n_factors = [8, 16, 32, 64]
+rmse = [0.933, 0.9355, 0.9379, 0.936]
+hr_at_10 = [0.0286, 0.035, 0.0498, 0.0467]
+
+# Tracer la courbe RMSE
+plt.figure(figsize=(8, 5))
+plt.plot(n_factors, rmse, marker='o', label='RMSE')
+plt.xlabel('Nombre de facteurs latents')
+plt.ylabel('RMSE')
+plt.title('Courbe RMSE en fonction du nombre de facteurs')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# Tracer la courbe HR@10
+plt.figure(figsize=(8, 5))
+plt.plot(n_factors, hr_at_10, marker='o', color='orange', label='HR@10')
+plt.xlabel('Nombre de facteurs latents')
+plt.ylabel('HR@10')
+plt.title('Courbe HR@10 en fonction du nombre de facteurs')
+plt.grid(True)
+plt.legend()
+plt.show()
