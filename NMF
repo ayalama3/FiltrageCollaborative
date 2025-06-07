@@ -113,3 +113,5 @@ for n_components in n_components_list:
     
     print(f"RMSE = {accuracy.rmse(predictions, verbose=False):.4f}")
     print(f"MAE  = {accuracy.mae(predictions, verbose=False):.4f}")
+    print(f"MSE  = {accuracy.mae(predictions, verbose=False):.4f}")
+
