@@ -1,0 +1,102 @@
+from surprise import SVDpp  # <--- On importe SVD++
+from surprise import Dataset
+from surprise import Reader
+from surprise.model_selection import train_test_split
+from surprise import accuracy
+import pandas as pd
+import numpy as np
+from collections import defaultdict
+import random
+
+# ---------------------
+# Fonctions pour HR@10 et NDCG@10
+# ---------------------
+def hit_rate(ranklist, left_out_item):
+    if left_out_item in ranklist:
+        return 1.0
+    return 0.0
+
+def ndcg(ranklist, left_out_item):
+    if left_out_item in ranklist:
+        index = ranklist.index(left_out_item)
+        return np.log(2) / np.log(index + 2)
+    return 0.0
+
+# ---------------------
+# Chargement des données
+# ---------------------
+data = Dataset.load_builtin("ml-100k")
+raw_ratings = data.raw_ratings.copy()
+
+random.shuffle(raw_ratings)
+
+user_seen = defaultdict(list)
+for uid, iid, true_r, _ in raw_ratings:
+    user_seen[uid].append((iid, true_r))
+
+# Leave-One-Out
+left_out = {}
+train_ratings = []
+
+for uid, user_ratings in user_seen.items():
+    test_rating = user_ratings[0]
+    left_out[uid] = test_rating
+    
+    for r in user_ratings[1:]:
+        train_ratings.append((uid, r[0], r[1]))
+
+# Dataset Surprise à partir de train_ratings
+reader = Reader(rating_scale=(1, 5))
+trainset = Dataset.load_from_df(
+    pd.DataFrame(train_ratings, columns=["userID", "itemID", "rating"]), 
+    reader
+).build_full_trainset()
+
+# Tous les items
+all_items = set([trainset.to_raw_iid(inner_id) for inner_id in trainset.all_items()])
+
+# ---------------------
+# Test SVD++ avec n_factors=32, n_epochs=20
+# ---------------------
+n_factors = 32
+n_epochs = 20
+lr_all = 0.005
+
+print(f"\n=== Test SVD++ pour n_factors = {n_factors}, n_epochs = {n_epochs} ===")
+
+algo = SVDpp(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr_all)
+algo.fit(trainset)
+
+# HR@10 et NDCG@10
+HRs = []
+NDCGs = []
+
+for uid in left_out.keys():
+    left_out_item = left_out[uid][0]
+    
+    user_items = set([iid for (iid, _) in user_seen[uid]])
+    candidates = all_items - user_items
+    candidates.add(left_out_item)
+    
+    predictions = []
+    for iid in candidates:
+        est = algo.predict(uid, iid).est
+        predictions.append((iid, est))
+    
+    predictions.sort(key=lambda x: x[1], reverse=True)
+    top_k = [iid for (iid, _) in predictions[:10]]
+    
+    HRs.append(hit_rate(top_k, left_out_item))
+    NDCGs.append(ndcg(top_k, left_out_item))
+
+print(f"HR@10 = {np.mean(HRs):.4f}")
+print(f"NDCG@10 = {np.mean(NDCGs):.4f}")
+
+# RMSE et MAE sur split normal
+trainset_full, testset = train_test_split(data, test_size=0.2)
+algo_full = SVDpp(n_factors=n_factors, n_epochs=n_epochs, lr_all=lr_all)
+algo_full.fit(trainset_full)
+predictions = algo_full.test(testset)
+
+print(f"RMSE = {accuracy.rmse(predictions, verbose=False):.4f}")
+print(f"MAE  = {accuracy.mae(predictions, verbose=False):.4f}")
