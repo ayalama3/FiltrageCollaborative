@@ -1,0 +1,37 @@
+from surprise import SVD, SVDpp, NMF, KNNBaseline
+from surprise.model_selection import cross_validate
+from surprise import Dataset
+from surprise import accuracy
+
+# Charger les données
+data = Dataset.load_builtin("ml-100k")
+trainset, testset = train_test_split(data, test_size=0.2)
+
+# Liste des algorithmes
+algorithms = {
+    "KNN - Cosine": KNNBaseline(sim_options={'name': 'cosine', 'user_based': False}),
+    "KNN - Pearson": KNNBaseline(sim_options={'name': 'pearson_baseline', 'user_based': False}),
+    "SVD": SVD(),
+    "SVD++": SVDpp(),
+    "NMF": NMF()
+}
+
+# Stocker les résultats
+results = []
+
+# Boucle sur les algorithmes
+for name, algo in algorithms.items():
+    print(f"Évaluation de {name}...")
+    algo.fit(trainset)
+    predictions = algo.test(testset)
+
+    rmse = accuracy.rmse(predictions, verbose=False)
+    mae = accuracy.mae(predictions, verbose=False)
+    mse = accuracy.mse(predictions, verbose=False)
+
+    results.append((name, rmse, mae, mse))
+
+# Affichage sous forme de tableau
+import pandas as pd
+df_results = pd.DataFrame(results, columns=["Algorithme", "RMSE", "MAE", "MSE"])
+print(df_results)
